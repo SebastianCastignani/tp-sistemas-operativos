@@ -1,7 +1,8 @@
 # TP Sistemas Operativos - Productor/Consumidor
 
-Implementación en C# del problema productor/consumidor con buffer acotado,
-semáforos y lock.
+Sistema de ingesta de telemetría aeronáutica para el TP de productor/consumidor.
+Usa `Thread`, `SemaphoreSlim`, `lock` e `Interlocked`, sin tareas ni colecciones
+concurrentes.
 
 ## Requisitos
 - .NET SDK 8.0 (o la versión indicada en `TargetFramework` del `.csproj`)
@@ -35,6 +36,10 @@ git clone <URL_DEL_REPO>
 cd tp-sistemas-operativos
 dotnet run
 ```
+
+El modo y los parámetros principales se configuran al comienzo de `Program.cs`.
+Los modos disponibles son `api`, `archivo`, `sim` y `mixto`. Las respuestas de la
+API se guardan en `capturas/` y luego pueden reproducirse con el modo `archivo`.
 
 `dotnet run` restaura dependencias, compila y ejecuta.
 

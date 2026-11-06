@@ -1,40 +1,79 @@
-public class BufferAcotado
+public sealed class BufferAcotado
 {
-    private readonly int[] _datos;
-    private int _in, _out;
-    private readonly SemaphoreSlim _vacios, _llenos;
+    private readonly AvionItem?[] _datos;
+    private int _in, _out, _ocupados;
+    private readonly SemaphoreSlim? _vacios, _llenos;
     private readonly object _lock = new();
+    private long _bloqueosProductores, _bloqueosConsumidores;
+    private readonly bool _sincronizar;
 
-    public BufferAcotado(int capacidad)
+    public BufferAcotado(int capacidad, bool sincronizar = true)
     {
-        _datos = new int[capacidad];
-        _vacios = new SemaphoreSlim(capacidad, capacidad);
-        _llenos = new SemaphoreSlim(0, capacidad);
+        if (capacidad <= 0) throw new ArgumentOutOfRangeException(nameof(capacidad));
+        _datos = new AvionItem[capacidad];
+        _sincronizar = sincronizar;
+        if (sincronizar)
+        {
+            _vacios = new SemaphoreSlim(capacidad, capacidad);
+            _llenos = new SemaphoreSlim(0, capacidad);
+        }
     }
 
-    public int Ocupados => _llenos.CurrentCount;
+    public int Ocupados => Volatile.Read(ref _ocupados);
+    public long BloqueosProductores => Interlocked.Read(ref _bloqueosProductores);
+    public long BloqueosConsumidores => Interlocked.Read(ref _bloqueosConsumidores);
 
-    public void Poner(int item)
+    public void Poner(AvionItem item)
     {
-        _vacios.Wait();                      // se bloquea si no hay lugar
-        lock (_lock)
+        if (_sincronizar)
         {
-            _datos[_in] = item;
-            _in = (_in + 1) % _datos.Length;
+            if (!_vacios!.Wait(0))
+            {
+                Interlocked.Increment(ref _bloqueosProductores);
+                _vacios.Wait();
+            }
+            // El semáforo se espera antes del lock para no retener el mutex mientras se espera lugar.
+            lock (_lock)
+            {
+                _datos[_in] = item;
+                _in = (_in + 1) % _datos.Length;
+                Interlocked.Increment(ref _ocupados);
+            }
+            _llenos!.Release();
+            return;
         }
-        _llenos.Release();                   // hay un ítem más
+
+        _datos[_in] = item;
+        _in = (_in + 1) % _datos.Length;
+        _ocupados = Math.Min(_ocupados + 1, _datos.Length);
     }
 
-    public int Sacar()
+    public AvionItem Sacar()
     {
-        _llenos.Wait();                      // se bloquea si no hay nada
-        int item;
-        lock (_lock)
+        if (_sincronizar)
         {
-            item = _datos[_out];
-            _out = (_out + 1) % _datos.Length;
+            if (!_llenos!.Wait(0))
+            {
+                Interlocked.Increment(ref _bloqueosConsumidores);
+                _llenos.Wait();
+            }
+            AvionItem item;
+            // El semáforo se espera antes del lock para no retener el mutex mientras se espera un ítem.
+            lock (_lock)
+            {
+                item = _datos[_out]!;
+                _datos[_out] = null;
+                _out = (_out + 1) % _datos.Length;
+                Interlocked.Decrement(ref _ocupados);
+            }
+            _vacios!.Release();
+            return item;
         }
-        _vacios.Release();                   // hay un lugar libre
-        return item;
+
+        var resultado = _datos[_out]!;
+        _datos[_out] = null;
+        _out = (_out + 1) % _datos.Length;
+        _ocupados = Math.Max(0, _ocupados - 1);
+        return resultado;
     }
 }

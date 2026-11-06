@@ -1,27 +1,18 @@
-public class Consumidor
+public sealed class Consumidor
 {
-    public const int FIN = -1;               // señal para que el consumidor termine
-
-    private readonly int _id;
-    private readonly BufferAcotado _buffer;
-    private readonly int _demoraMs;
-
-    public Consumidor(int id, BufferAcotado buffer, int demoraMs)
-    {
-        _id = id;
-        _buffer = buffer;
-        _demoraMs = demoraMs;
-    }
-
+    private readonly int _id; private readonly BufferAcotado _buffer; private readonly TablaAviones _tabla;
+    private readonly Estadisticas _estadisticas; private readonly int _demora;
+    public Consumidor(int id, BufferAcotado buffer, TablaAviones tabla, Estadisticas estadisticas, int demora)
+        => (_id, _buffer, _tabla, _estadisticas, _demora) = (id, buffer, tabla, estadisticas, demora);
     public void Ejecutar()
     {
         while (true)
         {
-            int item = _buffer.Sacar();
-            if (item == FIN) break;
-            Console.WriteLine($"    [C{_id}] sacó {item}");
-            Thread.Sleep(_demoraMs);         // consumidor lento a propósito
+            var item = _buffer.Sacar();
+            if (ReferenceEquals(item, AvionItem.Fin)) break;
+            _tabla.Upsert(item); _estadisticas.Consumido();
+            if (_demora > 0) Thread.Sleep(_demora);
         }
-        Console.WriteLine($"    [C{_id}] terminó");
+        Console.WriteLine($"[C{_id}] terminó");
     }
 }
