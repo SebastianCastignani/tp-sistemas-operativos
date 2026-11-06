@@ -38,8 +38,13 @@ dotnet run
 ```
 
 El modo y los parámetros principales se configuran al comienzo de `Program.cs`.
-Los modos disponibles son `api`, `archivo`, `sim` y `mixto`. Las respuestas de la
-API se guardan en `capturas/` y luego pueden reproducirse con el modo `archivo`.
+Los modos disponibles son `sim` (predeterminado) y `api`. También puede pasarse
+el modo como argumento:
+
+```bash
+dotnet run -- sim
+dotnet run -- api
+```
 
 `dotnet run` restaura dependencias, compila y ejecuta.
 

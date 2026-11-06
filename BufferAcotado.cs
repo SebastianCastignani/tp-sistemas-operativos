@@ -4,8 +4,12 @@ public sealed class BufferAcotado
     private int _in, _out, _ocupados;
     private readonly SemaphoreSlim? _vacios, _llenos;
     private readonly object _lock = new();
-    private long _bloqueosProductores, _bloqueosConsumidores;
     private readonly bool _sincronizar;
+
+    public long Producidos;
+    public long Consumidos;
+    public long BloqueosProductores;
+    public long BloqueosConsumidores;
 
     public BufferAcotado(int capacidad, bool sincronizar = true)
     {
@@ -20,19 +24,17 @@ public sealed class BufferAcotado
     }
 
     public int Ocupados => Volatile.Read(ref _ocupados);
-    public long BloqueosProductores => Interlocked.Read(ref _bloqueosProductores);
-    public long BloqueosConsumidores => Interlocked.Read(ref _bloqueosConsumidores);
-
     public void Poner(AvionItem item)
     {
         if (_sincronizar)
         {
             if (!_vacios!.Wait(0))
             {
-                Interlocked.Increment(ref _bloqueosProductores);
+                Interlocked.Increment(ref BloqueosProductores);
                 _vacios.Wait();
             }
             // El semáforo se espera antes del lock para no retener el mutex mientras se espera lugar.
+            // SECCIÓN CRÍTICA: protege los índices y la escritura del buffer circular.
             lock (_lock)
             {
                 _datos[_in] = item;
@@ -54,11 +56,12 @@ public sealed class BufferAcotado
         {
             if (!_llenos!.Wait(0))
             {
-                Interlocked.Increment(ref _bloqueosConsumidores);
+                Interlocked.Increment(ref BloqueosConsumidores);
                 _llenos.Wait();
             }
             AvionItem item;
             // El semáforo se espera antes del lock para no retener el mutex mientras se espera un ítem.
+            // SECCIÓN CRÍTICA: protege los índices y la lectura del buffer circular.
             lock (_lock)
             {
                 item = _datos[_out]!;
