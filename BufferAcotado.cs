@@ -8,8 +8,6 @@ public sealed class BufferAcotado
 
     public long Producidos;
     public long Consumidos;
-    public long BloqueosProductores;
-    public long BloqueosConsumidores;
 
     public BufferAcotado(int capacidad, bool sincronizar = true)
     {
@@ -28,11 +26,7 @@ public sealed class BufferAcotado
     {
         if (_sincronizar)
         {
-            if (!_vacios!.Wait(0))
-            {
-                Interlocked.Increment(ref BloqueosProductores);
-                _vacios.Wait();
-            }
+            _vacios!.Wait();
             // El semáforo se espera antes del lock para no retener el mutex mientras se espera lugar.
             // SECCIÓN CRÍTICA: protege los índices y la escritura del buffer circular.
             lock (_lock)
@@ -54,11 +48,7 @@ public sealed class BufferAcotado
     {
         if (_sincronizar)
         {
-            if (!_llenos!.Wait(0))
-            {
-                Interlocked.Increment(ref BloqueosConsumidores);
-                _llenos.Wait();
-            }
+            _llenos!.Wait();
             AvionItem item;
             // El semáforo se espera antes del lock para no retener el mutex mientras se espera un ítem.
             // SECCIÓN CRÍTICA: protege los índices y la lectura del buffer circular.

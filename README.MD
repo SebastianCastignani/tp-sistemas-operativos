@@ -37,14 +37,8 @@ cd tp-sistemas-operativos
 dotnet run
 ```
 
-El modo y los parámetros principales se configuran al comienzo de `Program.cs`.
-Los modos disponibles son `sim` (predeterminado) y `api`. También puede pasarse
-el modo como argumento:
-
-```bash
-dotnet run -- sim
-dotnet run -- api
-```
+El programa crea un productor por zona y cada productor realiza diez consultas
+a la API, esperando cinco segundos entre consultas.
 
 `dotnet run` restaura dependencias, compila y ejecuta.
 
