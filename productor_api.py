@@ -1,9 +1,6 @@
 import json
 import ssl
-import threading
 import urllib.request
-import urllib.error
-from datetime import datetime, timezone
 import certifi
 
 from avion import Avion
@@ -28,7 +25,6 @@ class ProductorApi:
         self.buffer = buffer
         self.cantidad_consultas = cantidad_consultas
         self.secuencia = 0
-        self.secuencia_lock = threading.Lock()
 
     def ejecutar(self) -> None:
         for consulta in range(self.cantidad_consultas):
@@ -57,9 +53,8 @@ class ProductorApi:
                     else:
                         altitud = None
 
-                    with self.secuencia_lock:
-                        self.secuencia += 1
-                        secuencia = self.secuencia
+                    self.secuencia += 1
+                    secuencia = self.secuencia
 
                     avion = Avion(
                         icao=str(avion_json.get("hex", "")),
@@ -69,11 +64,11 @@ class ProductorApi:
                         lon=float(lon),
                         zona=self.nombre,
                         secuencia=secuencia,
-                        timestamp_utc=datetime.now(timezone.utc),
                     )
 
                     # Si el buffer está lleno, poner espera hasta que un consumidor libere lugar.
                     self.buffer.poner(avion)
+                    print(f"[BUFFER] {self.nombre} puso el avión {avion.icao}.")
 
-            except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as error:
+            except (OSError, json.JSONDecodeError) as error:
                 print(f"[API/{self.nombre}] Error: {error}")

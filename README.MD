@@ -11,6 +11,8 @@ adsb.lol y dos consumidores leen las lecturas de un buffer compartido.
 ## Preparación en Linux
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```

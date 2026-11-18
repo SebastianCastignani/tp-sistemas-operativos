@@ -21,7 +21,8 @@ class BufferAcotado:
             print("[BUFFER LLENO] El productor espera hasta que haya un lugar.")
             self.lugares_libres.acquire()
 
-        # El semáforo se espera antes del lock para no bloquear el mutex mientras hay espera.
+        # Primero se espera el semáforo; si se bloqueara después de tomar el mutex,
+        # los consumidores no podrían entrar al lock para sacar un lugar y habría deadlock.
         # SECCIÓN CRÍTICA: protege el arreglo circular y los índices entrada/salida.
         with self.mutex:
             self.datos[self.entrada] = avion
@@ -34,7 +35,8 @@ class BufferAcotado:
         # Si no hay aviones, el consumidor queda bloqueado en este semáforo.
         self.aviones_disponibles.acquire()
 
-        # El semáforo se espera antes del lock para no retener el mutex durante la espera.
+        # Primero se espera el semáforo; si se esperara con el mutex tomado,
+        # el productor no podría entrar al lock para liberar o agregar aviones.
         # SECCIÓN CRÍTICA: protege el arreglo circular y los índices entrada/salida.
         with self.mutex:
             avion = self.datos[self.salida]

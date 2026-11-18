@@ -6,8 +6,9 @@ from buffer_acotado import BufferAcotado
 
 # Hilo consumidor que saca aviones del buffer y los muestra.
 class Consumidor:
-    def __init__(self, buffer: BufferAcotado):
+    def __init__(self, buffer: BufferAcotado, demora: float = 1):
         self.buffer = buffer
+        self.demora = demora
 
     def ejecutar(self) -> None:
         while True:
@@ -24,4 +25,4 @@ class Consumidor:
             )
 
             # Pausa breve para que los estados del buffer sean fáciles de observar.
-            time.sleep(1)
+            time.sleep(self.demora)
