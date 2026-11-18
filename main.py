@@ -7,7 +7,7 @@ from productor_api import ProductorApi
 
 
 # Configuración simple del ejercicio.
-CAPACIDAD_BUFFER = 3
+CAPACIDAD_BUFFER = 4
 CANTIDAD_CONSUMIDORES = 2
 CANTIDAD_CONSULTAS = 1
 
@@ -18,14 +18,14 @@ def main() -> None:
 
     productor = threading.Thread(
         target=ProductorApi(
-            "Nueva York",
-            40.64,
-            -73.78,
+            "Buenos Aires",
+            -34.6,
+            -58.4,
             150,
             buffer,
             CANTIDAD_CONSULTAS,
         ).ejecutar,
-        name="Productor-Nueva-York",
+        name="Productor-Buenos-Aires",
     )
 
     consumidores = []
