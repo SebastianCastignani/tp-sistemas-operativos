@@ -39,36 +39,52 @@ class ProductorApi:
                 with urllib.request.urlopen(solicitud, timeout=20, context=contexto) as respuesta:
                     datos = json.loads(respuesta.read().decode("utf-8"))
 
-                for avion_json in datos.get("ac", []):
+                if not isinstance(datos, dict):
+                    print(f"[API/{self.nombre}] Error: respuesta JSON con formato inesperado.")
+                    continue
+
+                aviones_json = datos.get("ac", [])
+                if not isinstance(aviones_json, list):
+                    print(f"[API/{self.nombre}] Error: la lista de aviones es inválida.")
+                    continue
+
+                for avion_json in aviones_json:
+                    if not isinstance(avion_json, dict):
+                        continue
+
                     lat = avion_json.get("lat")
                     lon = avion_json.get("lon")
                     if lat is None or lon is None:
                         continue
 
-                    altitud_json = avion_json.get("alt_baro")
-                    if altitud_json == "ground":
-                        altitud = 0
-                    elif isinstance(altitud_json, (int, float)):
-                        altitud = int(altitud_json)
-                    else:
-                        altitud = None
+                    try:
+                        altitud_json = avion_json.get("alt_baro")
+                        if altitud_json == "ground":
+                            altitud = 0
+                        elif isinstance(altitud_json, (int, float)) and not isinstance(altitud_json, bool):
+                            altitud = int(altitud_json)
+                        else:
+                            altitud = None
 
-                    self.secuencia += 1
-                    secuencia = self.secuencia
+                        icao_json = avion_json.get("hex")
+                        flight_json = avion_json.get("flight")
+                        avion = Avion(
+                            icao="" if icao_json is None else str(icao_json),
+                            callsign="" if flight_json is None else str(flight_json).strip(),
+                            altitud_ft=altitud,
+                            lat=float(lat),
+                            lon=float(lon),
+                            zona=self.nombre,
+                            secuencia=self.secuencia + 1,
+                        )
+                    except (TypeError, ValueError):
+                        continue
 
-                    avion = Avion(
-                        icao=str(avion_json.get("hex", "")),
-                        callsign=str(avion_json.get("flight", "")).strip(),
-                        altitud_ft=altitud,
-                        lat=float(lat),
-                        lon=float(lon),
-                        zona=self.nombre,
-                        secuencia=secuencia,
-                    )
+                    self.secuencia = avion.secuencia
 
                     # Si el buffer está lleno, poner espera hasta que un consumidor libere lugar.
                     self.buffer.poner(avion)
                     print(f"[BUFFER] {self.nombre} puso el avión {avion.icao}.")
 
-            except (OSError, json.JSONDecodeError) as error:
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as error:
                 print(f"[API/{self.nombre}] Error: {error}")

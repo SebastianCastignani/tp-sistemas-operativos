@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 
 
-# Representa una lectura que viaja del productor al consumidor.
+# Datos de una lectura que viajan del productor al consumidor.
 @dataclass
 class Avion:
+    # Cada campo describe un dato recibido o agregado por el programa.
     icao: str
     callsign: str
     altitud_ft: int | None
@@ -13,5 +14,5 @@ class Avion:
     secuencia: int
 
 
-# Mensaje especial que avisa a cada consumidor que debe terminar.
+# Mensaje especial enviado una vez a cada consumidor para indicar su final.
 FIN = Avion("", "", None, 0, 0, "", 0)

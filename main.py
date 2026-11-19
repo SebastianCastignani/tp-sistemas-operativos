@@ -48,7 +48,7 @@ def main() -> None:
     # Join espera a que el productor termine su consulta.
     productor.join()
 
-    # El centinela FIN permite que cada consumidor salga de su ciclo.
+    # Se pone un FIN por consumidor para que cada hilo salga de su ciclo propio.
     for consumidor in consumidores:
         buffer.poner(FIN)
 

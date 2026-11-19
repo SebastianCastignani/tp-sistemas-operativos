@@ -12,9 +12,10 @@ class Consumidor:
 
     def ejecutar(self) -> None:
         while True:
+            # sacar bloquea al consumidor si todavía no hay aviones disponibles.
             avion = self.buffer.sacar()
 
-            # FIN hace que el consumidor salga del ciclo y termine.
+            # FIN es el único mensaje especial: permite terminar sin consumir datos reales.
             if avion is FIN:
                 break
 
